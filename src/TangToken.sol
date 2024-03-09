@@ -10,6 +10,31 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC1155SupplyUpgradeable, UUPSUpgradeable {
+    
+    struct TangTokenStorage {
+        // 已铸造的NFT列表
+        uint256[]  s_NftIds;
+        // 持有者列表
+        address[]  s_totalPeople;
+        // 是否是小糖人
+        mapping(address => bool) s_isTangPeople;
+        // 上一次奖励时间
+        uint256  s_lastAwardTime;
+        // 是否已经奖励过
+        mapping(address => bool) s_peopleAwarded;
+    }
+    
+    uint256 public constant MAX_ID = 1314;
+    // keccak256(abi.encode(uint256(keccak256("TangToken.storage.ERC1155")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TangTokenStorageLocation = 0xd5df3fb4fabe20fb0f8806b05333d8553d0a46d163f4eab210496b509d4b5e00;
+
+    function _getTangTokenStorage() private pure returns (TangTokenStorage storage Tangstore) {
+        assembly {
+            Tangstore.slot := TangTokenStorageLocation
+        }
+    }
+    
+    
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -53,6 +78,15 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
         internal
         override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
     {
+        // 在铸造的时候判断是不是NFT
+        if (from == address(0)) {
+            for(uint256 i = 0; i < ids.length; i++) {
+                if(values[ids[i]] == 1) {
+                    _getTangTokenStorage().s_NftIds.push(ids[i]);
+                }
+            }
+
+        }
         super._update(from, to, ids, values);
     }
 }
