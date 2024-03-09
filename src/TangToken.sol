@@ -78,15 +78,22 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
         internal
         override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
     {
+        // 更新持有者列表
+        TangTokenStorage storage tangStore = _getTangTokenStorage();
+        if(tangStore.s_isTangPeople[to] == false) {
+            tangStore.s_isTangPeople[to] = true;
+            tangStore.s_totalPeople.push(to);
+        }
         // 在铸造的时候判断是不是NFT
         if (from == address(0)) {
             for(uint256 i = 0; i < ids.length; i++) {
                 if(values[ids[i]] == 1) {
-                    _getTangTokenStorage().s_NftIds.push(ids[i]);
+                    tangStore.s_NftIds.push(ids[i]);
                 }
             }
 
         }
+
         super._update(from, to, ids, values);
     }
 }
