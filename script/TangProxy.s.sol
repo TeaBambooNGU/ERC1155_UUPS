@@ -34,6 +34,7 @@ contract TangProxyScript is Script {
 
     function run(
         uint256 _privateKey, 
+        address _deployWallet,
         string memory _url,
         address tangTokenAddress, 
         address _vrfCoordinator,
@@ -44,7 +45,7 @@ contract TangProxyScript is Script {
         ) public returns (TangProxy tangProxy){
             vm.startBroadcast(_privateKey);
             tangProxy = new TangProxy(tangTokenAddress,"");
-            TangToken(address(tangProxy)).initialize(_url,msg.sender,_vrfCoordinator,_subscriptionId,_keyHash,_requestConfirmations,_callbackGasLimit);
+            TangToken(address(tangProxy)).initialize(_url,_deployWallet,_vrfCoordinator,_subscriptionId,_keyHash,_requestConfirmations,_callbackGasLimit);
             vm.stopBroadcast();
 
         

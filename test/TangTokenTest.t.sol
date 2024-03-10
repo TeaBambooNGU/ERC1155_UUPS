@@ -5,6 +5,7 @@ import {Test, console, console2} from "forge-std/Test.sol";
 import {ChainLinkEnum} from "src/ChainLinkEnum.sol";
 import {TangProxy} from "script/TangProxy.s.sol";
 import {TangToken} from "script/TangToken.s.sol";
+import {TangTokenV2} from "script/TangTokenV2.s.sol";
 import {VRFCoordinatorV2Mock} from "chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
 import {DeployTangContract} from "script/DeployTangContract.s.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -18,17 +19,19 @@ contract TangTokenTest is Test {
     address private user ;
     address private admin;
     VRFCoordinatorV2Mock private vrfCoordinatorV2Mock;
+    TangTokenV2 public tangTokenV2;
 
     event VRF_RequestSent(uint256 indexed requestId, uint32 indexed numWords);
     event VRF_RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
     event TangToken_Awarded(address indexed tangPeople);
 
     function setUp() public {
-        (TangProxy tangProxy, address deployWallet,address _vrfCoordinatorV2Mock) = new DeployTangContract().run();
+        (TangProxy tangProxy, address deployWallet,address _vrfCoordinatorV2Mock, TangTokenV2 _tangTokenV2) = new DeployTangContract().run();
         proxyContract = tangProxy;
         admin = deployWallet;
         user = makeAddr("user");
         vrfCoordinatorV2Mock = VRFCoordinatorV2Mock(_vrfCoordinatorV2Mock);
+        tangTokenV2 = _tangTokenV2;
     }
 
     modifier OnlyAnvil() {
@@ -117,5 +120,11 @@ contract TangTokenTest is Test {
         vm.expectEmit(false,false,false,false);
         emit TangToken_Awarded(address(this));
         vrfCoordinatorV2Mock.fulfillRandomWords(requestId, address(proxyContract));
+    }
+
+    function testUpgradeContract() public {
+        vm.prank(admin);
+        TangToken(address(proxyContract)).upgradeToAndCall(address(tangTokenV2),"");
+        assertEq(2,TangTokenV2(address(proxyContract)).getVersion());
     }
 }

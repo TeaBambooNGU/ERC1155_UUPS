@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Script,console} from "forge-std/Script.sol";
 import {TangToken,TangTokenScript} from "./TangToken.s.sol";
 import {TangProxy,TangProxyScript} from "./TangProxy.s.sol";
+import {TangTokenV2,TangTokenV2Script} from "./TangTokenV2.s.sol";
 import {ChainLinkConfig,NetWorkingChainLinkVRF,NetWorkingChainLinkPriceFeed,VRFCoordinatorV2Mock} from "./ChainLinkConfig.s.sol";
 import {NetWorkingConfig,NetWorking} from "./NetWorkingConfig.sol";
 import {ChainLinkEnum} from "src/ChainLinkEnum.sol";
@@ -38,7 +39,7 @@ contract DeployTangContract is Script {
         _;
     }
 
-    function run() public init returns (TangProxy proxyContract,address deployWallet,address vrfCoordinatorV2Mock){
+    function run() public init returns (TangProxy proxyContract,address deployWallet,address vrfCoordinatorV2Mock, TangTokenV2 tangTokenV2){
 
         // 先部署逻辑合约
         TangTokenScript tangtokenScript = new TangTokenScript();
@@ -55,6 +56,7 @@ contract DeployTangContract is Script {
         TangProxyScript tangProxyScript = new TangProxyScript();
         proxyContract = tangProxyScript.run(
             netWorking.privateKey,
+            netWorking.walletAddress,
             URL,
             address(tangtoken),
             chainLinkVRF.vrfCoordinator,
@@ -68,6 +70,8 @@ contract DeployTangContract is Script {
         chainlinkConfig.addConsumer(netWorking.privateKey,address(proxyContract),chainLinkVRF.subscriptionId);
         deployWallet = netWorking.walletAddress;
         vrfCoordinatorV2Mock = chainLinkVRF.vrfCoordinator;
+
+        tangTokenV2 = new TangTokenV2Script().run(netWorking.privateKey);
     }
 
 
