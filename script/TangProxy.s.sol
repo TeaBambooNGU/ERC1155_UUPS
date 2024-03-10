@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {TangProxy} from "src/TangProxy.sol";
 import {ChainLinkConfig, NetWorkingChainLinkPriceFeed, NetWorkingChainLinkVRF} from "./ChainLinkConfig.s.sol";
 import {ChainLinkEnum} from "src/ChainLinkEnum.sol";
+import {TangToken} from "src/TangToken.sol";
 
 contract TangProxyScript is Script {
 
@@ -31,7 +32,23 @@ contract TangProxyScript is Script {
     //     _;
     // }
 
-    function run() public returns(TangProxy) {}
+    function run(
+        uint256 _privateKey, 
+        string memory _url,
+        address tangTokenAddress, 
+        address _vrfCoordinator,
+        bytes32 _keyHash, 
+        uint64 _subscriptionId, 
+        uint16 _requestConfirmations, 
+        uint32 _callbackGasLimit
+        ) public returns (TangProxy tangProxy){
+            vm.startBroadcast(_privateKey);
+            tangProxy = new TangProxy(tangTokenAddress,"");
+            TangToken(address(tangProxy)).initialize(_url,msg.sender,_vrfCoordinator,_subscriptionId,_keyHash,_requestConfirmations,_callbackGasLimit);
+            vm.stopBroadcast();
+
+        
+    }
 
 
 }

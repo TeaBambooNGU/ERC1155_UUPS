@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console, console2} from "forge-std/Test.sol";
 import {ChainLinkEnum} from "src/ChainLinkEnum.sol";
 import {TangProxy} from "script/TangProxy.s.sol";
+import {TangToken} from "script/TangToken.s.sol";
 import {VRFCoordinatorV2Mock} from "chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
 import {DeployTangContract} from "script/DeployTangContract.s.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -41,7 +42,7 @@ contract TangTokenTest is Test {
 
     function testMintTokens() public {
         (bool success,) =
-            address(proxyContract).call(abi.encodeWithSignature("mint(address,uint256,uint256)", user, 1, 520));
+            address(proxyContract).call(abi.encodeWithSignature("mint(address,uint256,uint256,bytes)", user, 1, 520,""));
         if (success) {
             (, bytes memory data) =
                 address(proxyContract).call(abi.encodeWithSignature("balanceOf(address,uint256)", user, 1));
@@ -69,36 +70,6 @@ contract TangTokenTest is Test {
         assertEqUint(uint256(ChainLinkEnum.dataFeedType.ETH_USD), 0);
         assertEqUint(uint256(ChainLinkEnum.dataFeedType.BTC_USD), 1);
     }
-
-    function testGetETH2USD() public {
-        (bool success, bytes memory data) =
-            address(proxyContract).call(abi.encodeWithSignature("getETH2USDLatestAnswer()"));
-        
-        if (success) {
-            console2.log(abi.decode(data, (int256)));
-            
-        }
-        assertEq(success, true);
-    }
-
-    function testGetETH2USDVersion() public {
-        (bool success, bytes memory data) =
-            address(proxyContract).call(abi.encodeWithSignature("getETH2USDVersion()"));
-        if (success) {
-            console2.log(abi.decode(data, (uint256)));
-        }
-         assertEq(success, true);
-    
-    }
-
-    function testGetBTC2USD() public {
-        (bool success, bytes memory data) = address(proxyContract).call(abi.encodeWithSignature("getBTC2USDLatestAnswer()"));
-        if(success){
-            console2.log(abi.decode(data, (int256)));
-        }
-        assertEq(success, true);
-    }
-
 
     function testawardPeopleTokens() public {
         vm.warp(7 days);

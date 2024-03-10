@@ -10,10 +10,7 @@ import {ChainLinkEnum} from "src/ChainLinkEnum.sol";
 
 contract DeployTangContract is Script {
 
-    string private constant NAME = "TANG1155";
-    string private constant SYMBOL = "TANG";
     string private constant URL = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
-    string private constant wish = "Wish Tang Wan always happy, healthy, and everything goes well";
     ChainLinkConfig private chainlinkConfig;
 
     NetWorkingChainLinkVRF private chainLinkVRF;
@@ -45,14 +42,7 @@ contract DeployTangContract is Script {
 
         // 先部署逻辑合约
         TangTokenScript tangtokenScript = new TangTokenScript();
-        TangToken tangtoken = tangtokenScript.run(
-            // netWorking.privateKey,
-            // NAME,
-            // SYMBOL,
-            // URL,
-            // chainLinkVRF.vrfCoordinator,
-            // chainLinkVRF.numWords
-            );
+        TangToken tangtoken = tangtokenScript.run(netWorking.privateKey);
 
         //anvil链要重新创建订阅ID 充值代币
         if(chainLinkVRF.subscriptionId == 0){
@@ -64,18 +54,14 @@ contract DeployTangContract is Script {
         // 再部署代理合约
         TangProxyScript tangProxyScript = new TangProxyScript();
         proxyContract = tangProxyScript.run(
-            // netWorking.privateKey,
-            // address(tangtoken),
-            // "",
-            // URL,
-            // wish,
-            // chainLinkDataFeeds,
-            // chainLinkVRF.vrfCoordinator,
-            // chainLinkVRF.keyHash,
-            // chainLinkVRF.subscriptionId,
-            // chainLinkVRF.requestConfirmations,
-            // chainLinkVRF.callbackGasLimit,
-            // chainLinkVRF.numWords
+            netWorking.privateKey,
+            URL,
+            address(tangtoken),
+            chainLinkVRF.vrfCoordinator,
+            chainLinkVRF.keyHash,
+            chainLinkVRF.subscriptionId,
+            chainLinkVRF.requestConfirmations,
+            chainLinkVRF.callbackGasLimit
             );
         
         // 添加VRF消费者
