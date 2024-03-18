@@ -198,7 +198,7 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
             address awardPeople = totalPeople[awardIndex];
             if(!tangStore.s_peopleAwarded[awardPeople]){
                 tangStore.s_peopleAwarded[awardPeople] = true;
-                _mint(awardPeople, 1, 520,"");
+                _mint(awardPeople, 1, 100,"");
                 emit TangToken_Awarded(awardPeople);
             }
         }
