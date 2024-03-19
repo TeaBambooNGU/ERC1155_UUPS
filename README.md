@@ -10,6 +10,7 @@
 1. 最大铸造数 1314
 2. 如果一个tokenID铸造的数量为1 则为NFT，大于1为ERC20类token
 3. ID为1的token为ERC20类token，已被占用（有一个功能用chainLink的自动化隔2天随机奖励该合约的Token持有者，奖励Token的ID为1）
+4. 每个持有者只会被奖励一次
 ### 安装依赖库
 #### 一键安装所需依赖（chainLink，OpenZeppelin，forge-std）
 ```

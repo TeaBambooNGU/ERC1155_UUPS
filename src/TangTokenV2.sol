@@ -185,11 +185,19 @@ contract TangTokenV2 is Initializable, ERC1155Upgradeable, OwnableUpgradeable, E
         if(!tangStore.s_requests[_requestId].exists){
             revert RequestNotFound(_requestId);
         }
+
         if(msg.sender != address(tangStore.s_vrfCoordinator)){
             revert OnlyCoordinatorCanFulfill(msg.sender, address(tangStore.s_vrfCoordinator));
         }
+
+        // 防止连续多次请求的情况下 多次奖励
+        if(tangStore.s_lastAwardTime + AWARD_INTERVAL >= block.timestamp){
+            revert TangToken_AwardedNotInTime(msg.sender, block.timestamp);
+        }
+
         tangStore.s_requests[_requestId].fulfilled = true;
         tangStore.s_requests[_requestId].randomWords = _randomWords;
+        tangStore.s_lastAwardTime = block.timestamp;
         emit VRF_RequestFulfilled(_requestId, _randomWords);
 
         address[] memory totalPeople = tangStore.s_totalPeople;
