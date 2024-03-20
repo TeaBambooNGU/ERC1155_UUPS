@@ -10,6 +10,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AutomationCompatible} from "chainlink-brownie-contracts/contracts/src/v0.8/AutomationCompatible.sol";
 import {VRFCoordinatorV2Interface} from "chainlink-brownie-contracts/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import {Base64} from "openzeppelin-contracts/contracts/utils/Base64.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC1155SupplyUpgradeable, UUPSUpgradeable, AutomationCompatible {
 
@@ -54,15 +56,17 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
             uint256[] randomWords;
     }
     
-    uint256 public constant MAX_ID = 1314;
+    uint256 private constant MAX_ID = 1314;
     // keccak256(abi.encode(uint256(keccak256("TangToken.storage.ERC1155")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant TangTokenStorageLocation = 0xd5df3fb4fabe20fb0f8806b05333d8553d0a46d163f4eab210496b509d4b5e00;
-    uint32 public constant CHAINLINK_NUMWORDS = 3;
-    uint48 public constant AWARD_INTERVAL = 2 days;
+    uint32 private constant CHAINLINK_NUMWORDS = 3;
+    uint48 private constant AWARD_INTERVAL = 2 days;
 
     event VRF_RequestSent(uint256 indexed requestId, uint32 indexed numWords);
     event VRF_RequestFulfilled(uint256 indexed requestId, uint256[] randomWords);
     event TangToken_Awarded(address indexed tangPeople);
+
+    using Strings for uint;
 
 
     function _getTangTokenStorage() private pure returns (TangTokenStorage storage Tangstore) {
@@ -120,6 +124,12 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
 
     function setURI(string memory newuri) public onlyOwner {
         _setURI(newuri);
+    }
+
+    function uri(uint256 id) public view override returns (string memory) {
+        string memory tangSvg = super.uri(id);
+        return _makeURI(id, tangSvg);
+
     }
 
     function mint(address account, uint256 id, uint256 amount, bytes memory data)
@@ -200,13 +210,17 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
         emit VRF_RequestFulfilled(_requestId, _randomWords);
 
         address[] memory totalPeople = tangStore.s_totalPeople;
-        for(uint i = 0; i < _randomWords.length; i++){
+        for(uint i = 0; i < _randomWords.length;){
             uint awardIndex = _randomWords[i] % totalPeople.length;
             address awardPeople = totalPeople[awardIndex];
             if(!tangStore.s_peopleAwarded[awardPeople]){
                 tangStore.s_peopleAwarded[awardPeople] = true;
                 _mint(awardPeople, 1, 100,"");
                 emit TangToken_Awarded(awardPeople);
+            }
+
+            unchecked {
+                ++i;
             }
         }
         
@@ -219,6 +233,15 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
         onlyOwner
         override
     {}
+
+    function _makeURI(uint256 id, string memory tangSvg) private pure returns (string memory json) {
+
+        string memory name = string.concat(' "name": "TANG" ');
+        string memory description = string.concat(' "description": "', 'the ',id.toString(),'th NFT, BEST WISH TO YOU! "');
+        string memory image = string.concat(' "image": ', '"data:image/svg+xml;base64,',Base64.encode(bytes(tangSvg)), '"');
+
+        json = string.concat('{',name,',',description,',',image,'}');
+    }
 
     // The following functions are overrides required by Solidity.
 
@@ -234,13 +257,16 @@ contract TangToken is Initializable, ERC1155Upgradeable, OwnableUpgradeable, ERC
         }
         // 在铸造的时候判断 ID是否超过最大值  是不是NFT
         if (from == address(0)) {
-            for(uint256 i = 0; i < ids.length; i++) {
+            for(uint256 i = 0; i < ids.length;) {
                 uint256 id = ids[i];
                 if(id > MAX_ID) {
                     revert MintTokenOverMaxId(id);
                 }
                 if(values[i] == 1) {
                     tangStore.s_NftIds.push(id);
+                }
+                unchecked {
+                    ++i;
                 }
             }
         }

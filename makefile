@@ -41,3 +41,5 @@ endif
 
 deploy:
 	@forge script script/DeployTangContract.s.sol:DeployTangContract $(NETWORK_ARGS)
+
+mint :; cast send --rpc-url $(SEPOLIA_RPC_URL) 0x2E2F9Acb1fC00487aD5ea9eB0917675ace179325 "mint(address,uint256,uint256,bytes)"   $(SEPOLIA_WALLET) 1 100 0x  --private-key=$(SEPOLIA_WALLET_KEY)
